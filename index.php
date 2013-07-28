@@ -19,6 +19,9 @@ define('DOC_ROOT', $_SERVER['DOCUMENT_ROOT']);
 //include controller files
 require_once(DOC_ROOT . '/controller/MusicController.php');
 
+//session management initialization
+session_start();
+
 //initialize controllers
 $musicCtlr = new MusicController();
 

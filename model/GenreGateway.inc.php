@@ -23,7 +23,7 @@ class GenreGateway {
     //with optional input to limit by media type
     function getGenres($mediaTypeId=''){
         $sqlStmt = 'SELECT * FROM genre_mediaType gmt ';
-        $sqlStmt .= 'INNER JOIN grenre g ON g.genreId=gmt.genreId ';
+        $sqlStmt .= 'INNER JOIN genre g ON g.genreId=gmt.genreId ';
         $sqlStmt .= 'WHERE 1=1 ';        
         if(strlen($mediaTypeId)){
             $sqlStmt .= 'AND mediaTypeId = ' . $mediaTypeId;

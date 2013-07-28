@@ -45,7 +45,7 @@ class Database {
             return $this->resultSet;
         }
         
-        $sqlStmt = $this->mysqli->real_escape_string($sqlStmt)
+        $sqlStmt = $this->mysqli->real_escape_string($sqlStmt);
         $this->resultSet = $this->mysqli->query($sqlStmt);
         $this->lastSqlStmt = $sqlStmt;
         return $this->resultSet;
@@ -123,7 +123,7 @@ class Database {
     function __destruct(){
         //clean-up
         (!$this->resultSet) or $this->resultSet->close();
-        (!$this->mysqli or $this->mysqli->connect_errno) or $this->mysqli->close();
+        (!$this->mysqli || !$this->mysqli->connect_errno) or $this->mysqli->close();
     }
 }
 ?>
