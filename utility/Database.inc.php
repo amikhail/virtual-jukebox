@@ -42,10 +42,9 @@ class Database {
             $this->errorMsg = $this->errorMsg . "<br/>\nUnable to select: " . $sqlStmt;
                         
             $this->resultSet = NULL;
-            return $this->resultSet;
+            return false;
         }
         
-        $sqlStmt = $this->mysqli->real_escape_string($sqlStmt);
         $this->resultSet = $this->mysqli->query($sqlStmt);
         $this->lastSqlStmt = $sqlStmt;
         return $this->resultSet;
@@ -69,13 +68,12 @@ class Database {
             $this->errorMsg = $this->errorMsg . "<br/>\nUnable to select: " . $sqlStmt;
             
             $this->resultSet = NULL;
-            return $this->resultSet;
+            return false;
         }
         
-        $sqlStmt = $this->mysqli->real_escape_string($sqlStmt);
         $flag = $this->mysqli->query($sqlStmt);
         $this->lastSqlStmt = $sqlStmt;
-        
+                
         //check to see if query succeeded
         if(!$flag){
             $this->isError = true;
@@ -83,6 +81,10 @@ class Database {
             $this->errorMsg = $this->errorMsg . "<br/>\nUnable to execute: " . $sqlStmt;
         }
         return $flag;
+    }
+    
+    public function getLastInsertId(){
+        return $this->mysqli->insert_id;
     }
     
     public function isError(){
@@ -106,8 +108,8 @@ class Database {
         $this->mysqli->rollback();
     }
     
-    public function escapeString(){
-        return $mysqli->real_escape_string();
+    public function escapeString($str){
+        return $this->mysqli->real_escape_string($str);
     }
        
     //dumps class instance to screen
@@ -122,8 +124,8 @@ class Database {
     //destructor
     function __destruct(){
         //clean-up
-        (!$this->resultSet) or $this->resultSet->close();
-        (!$this->mysqli || !$this->mysqli->connect_errno) or $this->mysqli->close();
+        //(!isset($this->resultSet) || !$this->resultSet) or $this->resultSet->close();
+        //(!isset($this->mysqli) || !$this->mysqli || !$this->mysqli->connect_errno) or $this->mysqli->close();
     }
 }
 ?>

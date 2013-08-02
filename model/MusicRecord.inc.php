@@ -12,7 +12,7 @@ class MusicRecord {
     //private member data
     private $musicId = 0;
     private $mediaId = 0;
-    private $mediaTypeId = 0;
+    private $mediaTypeId = 1;
     private $genre_mediaType_id = 0;
     private $fileType_mediaType_id = 0;
     private $quality_mediaType_id = 0;
@@ -25,6 +25,8 @@ class MusicRecord {
     private $year = '';
     
     private $db = NULL;
+    private $isError = false;
+    private $errMsg = '';
     
     //constructor
     function __construct(){
@@ -40,7 +42,7 @@ class MusicRecord {
         }
         
         $sqlStmt = 'SELECT mu.musicId AS musicId, ';
-        $sqlStmt = 'SELECT me.mediaId AS mediaId, ';
+        $sqlStmt .= 'me.mediaId AS mediaId, ';
         $sqlStmt .= 'me.mediaTypeId AS mediaTypeId, ';
         $sqlStmt .= 'me.filePath AS filePath, ';
         $sqlStmt .= 'me.fileSize AS fileSize, ';
@@ -99,7 +101,9 @@ class MusicRecord {
         }
     }
     
-    function create(){        
+    function create(){
+        $this->db = new Database();
+        
         $this->db->startTransaction();
         
         $insertStmt = "INSERT INTO media(mediaTypeId, filePath, fileSize, playLength, ";
@@ -112,13 +116,18 @@ class MusicRecord {
         $insertStmt .= $this->db->escapeString($this->genre_mediaType_id) . ",";
         $insertStmt .= $this->db->escapeString($this->quality_mediaType_id) . ")";
         $result1 = $this->db->executeStmt($insertStmt);
-    
-        if(!$result1){         
+            
+        if(!$result1){
+            $this->isError = true;
+            $this->errMsg = $this->db->getErrorMsg();
+         
+            echo('errMsg: ' . $this->errMsg);
+         
             $this->db->rollbackTransaction();
             return false;
         }
         
-        $this->mediaId = $mysqli->insert_id;
+        $this->mediaId = $this->db->getLastInsertId();
         
         $insertStmt = "INSERT INTO music(mediaId, songTitle, albumTitle, artist) ";
         $insertStmt .= "VALUES(" . $this->db->escapeString($this->mediaId) . ",";
@@ -127,13 +136,17 @@ class MusicRecord {
         $insertStmt .= "'" . $this->db->escapeString($this->artist) . "')";
         $result2 = $this->db->executeStmt($insertStmt);
         
-        $this->musicId = $mysqli->insert_id;        
+        $this->musicId = $this->db->getLastInsertId();
         $this->db->commitTransaction();
+        
+        echo('result: ' . $result1 && $result2);
         
         return ($result1 && $result2);
     }
   
     function update(){
+        $this->db = new Database();
+        
         $this->db->startTransaction();
         
         $updateStmt = "UPDATE media";
@@ -146,13 +159,16 @@ class MusicRecord {
         $updateStmt .= "quality_mediaType_id=" .$this->db->escapeString($this->quality_mediaType_id);
         $updateStmt .= " WHERE mediaId =" . $this->db->escapeString($this->mediaId);
         $result1 = $this->db->executeStmt($updateStmt);
-    
-        if(!$result1){         
+        
+        if(!$result1){
+            $this->isError = true;
+            $this->errMsg = $this->db->getErrorMsg();
+         
+            echo('errMsg: ' . $this->errMsg);
+         
             $this->db->rollbackTransaction();
             return false;
         }
-        
-        $this->mediaId = $mysqli->insert_id;
         
         $updateStmt = "UPDATE music(mediaId, songTitle, albumTitle, artist) ";
         $updateStmt .= "SET mediaId=" . $this->db->escapeString($this->mediaId) . ",";
@@ -161,11 +177,16 @@ class MusicRecord {
         $updateStmt .= "artist='" . $this->db->escapeString($this->artist) . "'";
         $updateStmt .= " WHERE musicId =" . $this->db->escapeString($this->musicId);
         $result2 = $this->db->executeStmt($updateStmt);
-        
-        $this->musicId = $mysqli->insert_id;        
+                      
         $this->db->commitTransaction();
         
+        echo('result: ' . $result1 && $result2);
+        
         return ($result1 && $result2);
+    }
+    
+    function validate(){
+        return true;
     }
     
     //BEGIN accessor methods
@@ -195,7 +216,6 @@ class MusicRecord {
     }
     function getGenre_mediaType_id(){
         return $this->genre_mediaType_id;
-;
     }
     
     function setFileType_mediaType_id($fileType_mediaType_id){
@@ -262,7 +282,7 @@ class MusicRecord {
     }
     
     function getFileName(){
-        return '';
+        return $this->filePath;
     }
     //END accessor methods
         

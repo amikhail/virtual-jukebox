@@ -12,9 +12,11 @@
  * Example:
  * http://jukebox.net/index.php?section=music&action=search&debug=1
  * calls MusicController->search() w/ debug info at end of page
- */
-
+ */ 
 define('DOC_ROOT', $_SERVER['DOCUMENT_ROOT']);
+
+//include config parameters
+require_once(DOC_ROOT . '/utility/Config.inc.php'); 
 
 //include controller files
 require_once(DOC_ROOT . '/controller/MusicController.php');
