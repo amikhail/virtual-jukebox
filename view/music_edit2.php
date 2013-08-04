@@ -10,11 +10,24 @@ require_once(DOC_ROOT . '/utility/FormControls.inc.php');
     <head></head>
     <body>   
         <div id="step2">
-            <form id="step2form" action="/index.php?section=music&action=createProcess2" method="POST">
+            <?php if($edit){ ?>
+                <a href="/index.php?section=music&action=editForm2&musicId=<?php echo($musicId); ?>">Upload a different music file.</a>
+            <?php } ?>
+            
+            <?php if($edit){ ?>
+                <form id="metadataForm" action="/index.php?section=music&action=editProcess1" method="POST">
+            <?php } else { ?>
+                <form id="metadataForm" action="/index.php?section=music&action=createProcess2" method="POST"> 
+            <?php } ?>
                 <table border="1">
                     <tr>
-                        <td>2.</td>
-                        <td colspan="2">Enter the music metadata.</td>
+                        <?php if($edit){ ?>
+                            <td>1.</td>
+                            <td colspan="2">Update the music metadata.</td>
+                        <?php } else { ?>
+                            <td>2.</td>
+                            <td colspan="2">Enter the music metadata.</td>
+                        <?php } ?>
                     </tr>
                     <tr>
                         <td>&nbsp;</td>
@@ -67,7 +80,9 @@ require_once(DOC_ROOT . '/utility/FormControls.inc.php');
                         <td><?php echo( FormControls::createSelect($qualities, $music->getQuality_mediaType_id(), 'qualityId', 'quality_mediaType_id', 'qualityDisplayLabel', '', 'qualityId') ) ?></td>                        
                     </tr>
                     
-                    <input type="hidden" name="section2complete" value="1" />
+                    <?php if($edit){ ?>
+                        <input type="hidden" name="musicId" value="<?php echo($music->getMusicId()) ?>" />
+                    <?php } ?>
                     
                     <tr>
                         <td colspan="3" style="align: right;"><input type="submit" value="Save Music" id="section2submit" /></td>

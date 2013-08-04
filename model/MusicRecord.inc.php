@@ -17,12 +17,18 @@ class MusicRecord {
     private $fileType_mediaType_id = 0;
     private $quality_mediaType_id = 0;
     private $filePath = '';
+    private $oldFilePath = '';              //for edits only; used to retreive previous filepath, when new file is uploaded during edit music process
     private $fileSize = 0;                  //in bytes
     private $playLength = 0;                //in seconds
     private $songTitle = '';
     private $albumTitle = '';
     private $artist = '';
     private $year = '';
+    
+    //for read-only accessor methods
+    private $genreDisplayLabel = '';
+    private $fileTypeDisplayLabel = '';
+    private $qualityDisplayLabel = '';
     
     private $db = NULL;
     private $isError = false;
@@ -34,7 +40,8 @@ class MusicRecord {
         $this->db = new Database();
     }
     
-    function loadMusic($musicId){
+    public static function loadMusic($musicId){
+        $db = new Database();
         
         //input validation
         if(!isset($musicId) || !strlen($musicId)){
@@ -51,46 +58,85 @@ class MusicRecord {
         $sqlStmt .= 'mu.albumTitle AS albumTitle, ';
         $sqlStmt .= 'mu.artist AS artist, ';
         $sqlStmt .= 'me.fileType_mediaType_id AS fileType_mediaType_id, ';
-        //$sqlStmt .= 'ft.fileTypeDisplayLabel AS fileTypeDisplayLabel, ';
-        $sqlStmt .= 'me.genre_mediaType_id, AS genre_mediaType_id, ';
-        //$sqlStmt .= 'g.genreDisplayLabel AS genreDisplayLabel, ';
+        $sqlStmt .= 'ft.fileTypeDisplayLabel AS fileTypeDisplayLabel, ';
+        $sqlStmt .= 'me.genre_mediaType_id AS genre_mediaType_id, ';
+        $sqlStmt .= 'g.genreDisplayLabel AS genreDisplayLabel, ';
         $sqlStmt .= 'me.quality_mediaType_id AS quality_mediaType_id, ';
-        //$sqlStmt .= 'q.qualityDisplayLabel AS qualityDisplayLabel, ';
+        $sqlStmt .= 'q.qualityDisplayLabel AS qualityDisplayLabel ';
         $sqlStmt .= 'FROM music mu ';
         $sqlStmt .= 'INNER JOIN media me ON mu.mediaId=me.mediaId ';
-        //$sqlStmt .= 'INNER JOIN fileType_mediaType ft_mt ON me.fileType_mediaType_id=ft_mt.fileType_mediaType_id ' ;
-        //$sqlStmt .= 'INNER JOIN genre_mediaType g_mt ON me.genre_mediaType_id=g_mt.genre_mediaType_id ';
-        //$sqlStmt .= 'INNER JOIN quality_mediaType q_mt ON me.quality_mediaType_id=q_mt.quality_mediaType_id ';
-        //$sqlStmt .= 'INNER JOIN filetype ft = ft_mt.fileTypeId=ft.fileTypeId ';
-        //$sqlStmt .= 'INNER JOIN genre g = g_mt.genreId=g.genreId ';
-        //$sqlStmt .= 'INNER JOIN quality q = q_mt.qualityId=q.qualityId ';
+        $sqlStmt .= 'INNER JOIN fileType_mediaType ft_mt ON me.fileType_mediaType_id=ft_mt.fileType_mediaType_id ' ;
+        $sqlStmt .= 'INNER JOIN genre_mediaType g_mt ON me.genre_mediaType_id=g_mt.genre_mediaType_id ';
+        $sqlStmt .= 'INNER JOIN quality_mediaType q_mt ON me.quality_mediaType_id=q_mt.quality_mediaType_id ';
+        $sqlStmt .= 'INNER JOIN filetype ft ON ft_mt.fileTypeId=ft.fileTypeId ';
+        $sqlStmt .= 'INNER JOIN genre g ON g_mt.genreId=g.genreId ';
+        $sqlStmt .= 'INNER JOIN quality q ON q_mt.qualityId=q.qualityId ';
         $sqlStmt .= 'WHERE 1=1';
         if(strlen($musicId)){
             $sqlStmt .= ' AND mu.musicId = ' . $musicId;
         }
         
-        $rs = $this->db->executeSelect($sqlStmt);
+        $rs = $db->executeSelect($sqlStmt);
+        
         if($rs->num_rows > 0){
             $row = $rs->fetch_array();
-            $this->setMusicId($row["musicId"]);
-            $this->setMediaId($row["mediaId"]);
-            $this->setMediaTypeId($row["mediaTypeId"]);
-            $this->setFileType_mediaType_id($row["fileType_mediaType_id"]);
-            $this->setGenre_mediaType_id($row["genre_mediaType_id"]);
-            $this->setQuality_mediaType_id($row["quality_mediaType_id"]);
-            $this->setFilePath($row["filePath"]);
-            $this->setFileSize($row["fileSize"]);
-            $this->setPlayLength($row["playLength"]);
-            $this->setSongTitle($row["songTitle"]);
-            $this->setAlbumTitle($row["albumTitle"]);
-            $this->setArtist($row["artist"]);
+            $music = new MusicRecord();
+            $music->setMusicId($row["musicId"]);
+            $music->setMediaId($row["mediaId"]);
+            $music->setMediaTypeId($row["mediaTypeId"]);
+            $music->setFileType_mediaType_id($row["fileType_mediaType_id"]);
+            $music->setGenre_mediaType_id($row["genre_mediaType_id"]);
+            $music->setQuality_mediaType_id($row["quality_mediaType_id"]);
+            $music->setFilePath($row["filePath"]);
+            $music->setOldFilePath($row["filePath"]);
+            $music->setFileSize($row["fileSize"]);
+            $music->setPlayLength($row["playLength"]);
+            $music->setSongTitle($row["songTitle"]);
+            $music->setAlbumTitle($row["albumTitle"]);
+            $music->setArtist($row["artist"]);
+            $music->setGenreDisplayLabel($row["genreDisplayLabel"]);
+            $music->setFileTypeDisplayLabel($row["fileTypeDisplayLabel"]);
+            $music->setQualityDisplayLabel($row["qualityDisplayLabel"]);
         }else{
             return NULL; //FAIL; unable to retrieve music record
         }
         
         $rs->close();
         
-        return this;
+        return $music;
+    }
+    
+    public static function deleteMusic($musicId){
+        $db = new Database();
+        
+        //input validation
+        if(!isset($musicId) || !strlen($musicId)){
+            die('musicId is a required parameter for MusicRecord->loadMusic'); //required parameter
+        }
+        
+        $music = MusicRecord::loadMusic($musicId);
+        
+        $mediaId = 0;
+        if($music != NULL){
+            $mediaId = $music->getMediaId();
+        }
+        
+        $db->startTransaction();
+        
+        $deleteStmt = 'DELETE FROM music WHERE musicId=' . $db->escapeString($musicId);
+        $result1 = $db->executeStmt($deleteStmt);
+        
+        if(!$result1){
+            $db->rollbackTransaction();
+            return false;
+        }
+        
+        $deleteStmt = 'DELETE FROM media WHERE mediaId=' . $db->escapeString($mediaId);
+        $result2 = $db->executeStmt($deleteStmt);
+        
+        $db->commitTransaction();
+        
+        return ($result1 && $result2);
     }
     
     function save(){
@@ -136,10 +182,18 @@ class MusicRecord {
         $insertStmt .= "'" . $this->db->escapeString($this->artist) . "')";
         $result2 = $this->db->executeStmt($insertStmt);
         
-        $this->musicId = $this->db->getLastInsertId();
-        $this->db->commitTransaction();
-        
-        echo('result: ' . $result1 && $result2);
+        if(!$result2){
+            $this->isError = true;
+            $this->errMsg = $this->db->getErrorMsg();
+         
+            echo('errMsg: ' . $this->errMsg);
+         
+            $this->db->rollbackTransaction();
+            return false;
+        }else{
+            $this->musicId = $this->db->getLastInsertId();
+            $this->db->commitTransaction();
+        }  
         
         return ($result1 && $result2);
     }
@@ -149,14 +203,14 @@ class MusicRecord {
         
         $this->db->startTransaction();
         
-        $updateStmt = "UPDATE media";
-        $updateStmt .= "SET mediaTypeId=" . $this->db->escapeString($this->mediaTypeId) . ",";
-        $updateStmt .= "filePath='" . $this->db->escapeString($this->filePath) . "',";
-        $updateStmt .= "fileSize=" . $this->db->escapeString($this->fileSize) . ",";
-        $updateStmt .= "playLength=" .$this->db->escapeString($this->playLength) . ",";
-        $updateStmt .= "fileType_mediaType_id=" .$this->db->escapeString($this->fileType_mediaType_id) . ",";
-        $updateStmt .= "genre_mediaType_id=" .$this->db->escapeString($this->genre_mediaType_id) . ",";
-        $updateStmt .= "quality_mediaType_id=" .$this->db->escapeString($this->quality_mediaType_id);
+        $updateStmt = "UPDATE media ";
+        $updateStmt .= " SET mediaTypeId=" . $this->db->escapeString($this->mediaTypeId) . ",";
+        $updateStmt .= " filePath='" . $this->db->escapeString($this->filePath) . "',";
+        $updateStmt .= " fileSize=" . $this->db->escapeString($this->fileSize) . ",";
+        $updateStmt .= " playLength=" .$this->db->escapeString($this->playLength) . ",";
+        $updateStmt .= " fileType_mediaType_id=" .$this->db->escapeString($this->fileType_mediaType_id) . ",";
+        $updateStmt .= " genre_mediaType_id=" .$this->db->escapeString($this->genre_mediaType_id) . ",";
+        $updateStmt .= " quality_mediaType_id=" .$this->db->escapeString($this->quality_mediaType_id);
         $updateStmt .= " WHERE mediaId =" . $this->db->escapeString($this->mediaId);
         $result1 = $this->db->executeStmt($updateStmt);
         
@@ -170,17 +224,25 @@ class MusicRecord {
             return false;
         }
         
-        $updateStmt = "UPDATE music(mediaId, songTitle, albumTitle, artist) ";
-        $updateStmt .= "SET mediaId=" . $this->db->escapeString($this->mediaId) . ",";
-        $updateStmt .= "songTitle='" . $this->db->escapeString($this->songTitle) . "',";
-        $updateStmt .= "albumTitle='" . $this->db->escapeString($this->albumTitle) . "',";
-        $updateStmt .= "artist='" . $this->db->escapeString($this->artist) . "'";
+        $updateStmt = "UPDATE music ";
+        $updateStmt .= " SET mediaId=" . $this->db->escapeString($this->mediaId) . ",";
+        $updateStmt .= " songTitle='" . $this->db->escapeString($this->songTitle) . "',";
+        $updateStmt .= " albumTitle='" . $this->db->escapeString($this->albumTitle) . "',";
+        $updateStmt .= " artist='" . $this->db->escapeString($this->artist) . "'";
         $updateStmt .= " WHERE musicId =" . $this->db->escapeString($this->musicId);
         $result2 = $this->db->executeStmt($updateStmt);
-                      
-        $this->db->commitTransaction();
         
-        echo('result: ' . $result1 && $result2);
+        if(!$result2){
+            $this->isError = true;
+            $this->errMsg = $this->db->getErrorMsg();
+         
+            echo('errMsg: ' . $this->errMsg);
+         
+            $this->db->rollbackTransaction();
+            return false;
+        }else{
+            $this->db->commitTransaction();
+        }
         
         return ($result1 && $result2);
     }
@@ -191,7 +253,7 @@ class MusicRecord {
     
     //BEGIN accessor methods
     function setMusicId($musicId){
-        $this->musicId = musicId;
+        $this->musicId = $musicId;
     }
     function getMusicId(){
         return $this->musicId;
@@ -218,11 +280,28 @@ class MusicRecord {
         return $this->genre_mediaType_id;
     }
     
+    //read-only property, set through lookup id
+    private function setGenreDisplayLabel($genreDisplayLabel){
+        $this->genreDisplayLabel = $genreDisplayLabel;
+    }
+    function getGenre(){
+        return $this->genreDisplayLabel;
+    }
+    
     function setFileType_mediaType_id($fileType_mediaType_id){
         $this->fileType_mediaType_id = $fileType_mediaType_id;
     }
     function getFileType_mediaType_id(){
         return $this->fileType_mediaType_id;
+    }
+    
+    
+    //read-only property, set through lookup id
+    private function setFileTypeDisplayLabel($fileTypeDisplayLabel){
+        $this->fileTypeDisplayLabel = $fileTypeDisplayLabel;
+    }
+    function getFileType(){
+        return $this->fileTypeDisplayLabel;
     }
     
     function setQuality_mediaType_id($quality_mediaType_id){
@@ -232,11 +311,26 @@ class MusicRecord {
         return $this->quality_mediaType_id;
     }
     
+    //read-only property, set through lookup id
+    private function setQualityDisplayLabel($qualityDisplayLabel){
+        $this->qualityDisplayLabel = $qualityDisplayLabel;
+    }
+    function getQuality(){
+        return $this->qualityDisplayLabel;
+    }
+    
     function setFilePath($filePath){
         $this->filePath = $filePath;
     }
     function getFilePath(){
         return $this->filePath;
+    }
+    
+    private function setOldFilePath($oldFilePath){
+        $this->oldFilePath = $oldFilePath;
+    }
+    function getFilePath(){
+        return $this->oldFilePath;
     }
     
     function setFileSize($fileSize){
@@ -281,8 +375,12 @@ class MusicRecord {
         return $this->year;
     }
     
+    //read-only property, derived from filePath
     function getFileName(){
-        return $this->filePath;
+        $filePathParts = explode(OS_DIR_SEPERATOR, $this->filePath);
+        $arrLen = count($filePathParts);
+        return $filePathParts[$arrLen-1];
+
     }
     //END accessor methods
         

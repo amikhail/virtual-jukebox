@@ -61,16 +61,16 @@ require_once(DOC_ROOT . '/utility/FormControls.inc.php');
 		<th>Song Title</th>
 		<th>Album Title</th>
 		<th>Genre</th>
-		<th colspan="3"></th>
+		<th colspan="3"><a href="/index.php?section=music&action=createForm1">Add New Music</a></th>
 	</tr>
 	<?php while($musics && $musics->num_rows && $row = $musics->fetch_assoc()){ ?>
 	<tr>
 		<td><?php echo($row['songTitle']); ?></td>
 		<td><?php echo($row['albumTitle']); ?></td>
 		<td><?php echo($row['genreDisplayLabel']); ?></td>
-		<td><a href="/index.php?section=music&action=view">View</a></td>
-		<td><a href="/index.php?section=music&action=editForm1&musicId=<?php echo($row['musicId']); ?>">Edit</a></td>
-		<td><a href="/index.php?section=music&action=deleteForm&musicId=<?php echo($row['musicId']); ?>">Delete</a></td>
+		<td><a href="/index.php?section=music&action=view&musicId=<?php echo($row['musicId']); ?>">View</a></td>
+		<td><a href="/index.php?section=music&action=editForm1&reset=1&musicId=<?php echo($row['musicId']); ?>">Edit</a></td>
+		<td><a href="/index.php?section=music&action=confirmDelete&musicId=<?php echo($row['musicId']); ?>">Delete</a></td>
 		
 	</tr>
 	<?php } ?>
