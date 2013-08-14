@@ -329,7 +329,7 @@ class MusicRecord {
     private function setOldFilePath($oldFilePath){
         $this->oldFilePath = $oldFilePath;
     }
-    function getFilePath(){
+    function getOldFilePath(){
         return $this->oldFilePath;
     }
     

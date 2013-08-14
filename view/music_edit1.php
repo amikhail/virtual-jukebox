@@ -20,14 +20,14 @@ require_once(DOC_ROOT . '/utility/FormControls.inc.php');
                 <form id="uploadForm" action="/index.php?section=music&action=createProcess1" method="POST" enctype="multipart/form-data">
             <?php } ?>
             
-                <table border="1">
+                <table border="0">
                     <tr>
                         <?php if($edit){ ?>
-                            <td>1.</td>
-                            <td colspan="2">Upload the music file.</td>
-                        <?php } else { ?>
                             <td>2.</td>
                             <td colspan="2">Upload a new music file.</td>
+                        <?php } else { ?>
+                            <td>1.</td>
+                            <td colspan="2">Upload the music file.</td>
                         <?php } ?>
                     </tr>
                     <?php if($edit){ ?>

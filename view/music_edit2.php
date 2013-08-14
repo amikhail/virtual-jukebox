@@ -19,7 +19,7 @@ require_once(DOC_ROOT . '/utility/FormControls.inc.php');
             <?php } else { ?>
                 <form id="metadataForm" action="/index.php?section=music&action=createProcess2" method="POST"> 
             <?php } ?>
-                <table border="1">
+                <table border="0">
                     <tr>
                         <?php if($edit){ ?>
                             <td>1.</td>

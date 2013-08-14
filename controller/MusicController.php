@@ -70,6 +70,8 @@ class MusicController {
     public function createForm1(){
         $_SESSION['musicRecord'] = new MusicRecord();
         $music =& $_SESSION['musicRecord'];
+        $edit = false;
+        
         require_once(DOC_ROOT . '/view/music_edit1.php');
     }
     
@@ -141,6 +143,8 @@ class MusicController {
         $genres = $g->getGenres();
         $fileTypes = $ft->getFileTypes();
         $qualities = $q->getQualities();
+        
+        $edit = false;
         
         if(!isset($_SESSION['musicRecord']) ){
             $errMsg = urlencode('There was an internal application error, please try uploading the file again.');
